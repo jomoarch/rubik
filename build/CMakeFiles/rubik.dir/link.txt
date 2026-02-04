@@ -1,1 +1,0 @@
-/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/rubik.dir/link.d CMakeFiles/rubik.dir/src/main.cpp.o CMakeFiles/rubik.dir/src/Vector3.cpp.o CMakeFiles/rubik.dir/src/Quaternion.cpp.o CMakeFiles/rubik.dir/src/ColorConverter.cpp.o CMakeFiles/rubik.dir/src/RubiksCubePiece.cpp.o CMakeFiles/rubik.dir/src/RubiksCube.cpp.o -o rubik  -lcurses -lform
