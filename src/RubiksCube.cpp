@@ -347,92 +347,47 @@ void RubiksCube::drawPolygon(WINDOW *win,
   if (points.size() < 3)
     return;
 
-  // 获取窗口边界
+  // Get window dimensions
   int maxY, maxX;
   getmaxyx(win, maxY, maxX);
 
-  // 找到多边形的y范围
-  int yMin = maxY, yMax = 0;
-  for (const auto &p : points) {
-    if (p.second < yMin)
-      yMin = p.second;
-    if (p.second > yMax)
-      yMax = p.second;
-  }
+  // Simple line drawing between points
+  for (size_t i = 0; i < points.size(); i++) {
+    int x1 = points[i].first;
+    int y1 = points[i].second;
+    int x2 = points[(i + 1) % points.size()].first;
+    int y2 = points[(i + 1) % points.size()].second;
 
-  // 确保y范围在窗口内
-  yMin = std::max(0, yMin);
-  yMax = std::min(maxY - 1, yMax);
+    // Simple line drawing algorithm
+    int dx = std::abs(x2 - x1);
+    int dy = std::abs(y2 - y1);
+    int sx = (x1 < x2) ? 1 : -1;
+    int sy = (y1 < y2) ? 1 : -1;
+    int err = dx - dy;
 
-  // 准备边列表
-  struct Edge {
-    int yMin, yMax;
-    float x, slope;
-  };
-
-  std::vector<Edge> edges;
-  size_t n = points.size();
-
-  for (size_t i = 0; i < n; i++) {
-    const auto &p1 = points[i];
-    const auto &p2 = points[(i + 1) % n];
-
-    // 跳过水平线
-    if (p1.second == p2.second)
-      continue;
-
-    Edge edge;
-    if (p1.second < p2.second) {
-      edge.yMin = p1.second;
-      edge.yMax = p2.second;
-      edge.x = static_cast<float>(p1.first);
-    } else {
-      edge.yMin = p2.second;
-      edge.yMax = p1.second;
-      edge.x = static_cast<float>(p2.first);
-    }
-
-    // 计算斜率
-    float dx = static_cast<float>(p2.first - p1.first);
-    float dy = static_cast<float>(p2.second - p1.second);
-    edge.slope = dx / dy;
-
-    edges.push_back(edge);
-  }
-
-  // 扫描线算法
-  for (int y = yMin; y <= yMax; y++) {
-    std::vector<float> intersections;
-
-    // 收集与当前扫描线的交点
-    for (const auto &edge : edges) {
-      if (y >= edge.yMin && y < edge.yMax) {
-        float x = edge.x + (y - edge.yMin) * edge.slope;
-        intersections.push_back(x);
-      }
-    }
-
-    // 对交点排序
-    std::sort(intersections.begin(), intersections.end());
-
-    // 填充交点之间的区域
-    for (size_t i = 0; i + 1 < intersections.size(); i += 2) {
-      int startX = static_cast<int>(intersections[i]);
-      int endX = static_cast<int>(intersections[i + 1]);
-
-      // 确保x在边界内
-      startX = std::max(0, startX);
-      endX = std::min(maxX - 1, endX);
-
-      // 绘制填充线
-      for (int x = startX; x <= endX; x++) {
+    while (true) {
+      // Check bounds
+      if (y1 >= 0 && y1 < maxY && x1 >= 0 && x1 < maxX) {
         if (colorPair > 0) {
           wattron(win, COLOR_PAIR(colorPair));
-          mvwaddch(win, y, x, colorChar);
+          mvwaddch(win, y1, x1, colorChar);
           wattroff(win, COLOR_PAIR(colorPair));
         } else {
-          mvwaddch(win, y, x, colorChar);
+          mvwaddch(win, y1, x1, colorChar);
         }
+      }
+
+      if (x1 == x2 && y1 == y2)
+        break;
+
+      int e2 = 2 * err;
+      if (e2 > -dy) {
+        err -= dy;
+        x1 += sx;
+      }
+      if (e2 < dx) {
+        err += dx;
+        y1 += sy;
       }
     }
   }
@@ -443,7 +398,7 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
   werase(win);
   updateAnimation();
 
-  // 定义要绘制的面数据结构
+  // Define face drawing order based on depth (painter's algorithm)
   struct FaceData {
     std::vector<std::pair<int, int>> points;
     int colorPair;
@@ -464,7 +419,7 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
       if (corners.empty())
         continue;
 
-      // 计算面中心
+      // Calculate face center
       Vector3 center(0, 0, 0);
       for (const auto &corner : corners) {
         center = center + corner;
@@ -474,7 +429,7 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
       Vector3 rotatedCenter = rotation.rotateVector(center);
       Vector3 worldCenter = rotatedCenter + position;
 
-      // 计算面法向量
+      // Calculate face normal
       if (corners.size() >= 3) {
         Vector3 v1 = corners[1] - corners[0];
         Vector3 v2 = corners[2] - corners[0];
@@ -483,7 +438,7 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
 
         Vector3 cameraToFace = worldCenter - cameraPosition;
 
-        // 背面剔除
+        // Backface culling
         if (normalRotated.dot(cameraToFace) >= 0) {
           continue;
         }
@@ -511,7 +466,7 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
           colorCache[terminalColorIndex] = colorPair;
         }
 
-        // 投影角点到屏幕
+        // Project corners to screen
         std::vector<std::pair<int, int>> screenPoints;
         for (const auto &corner3d : corners) {
           auto [x, y, _] = projectPoint(corner3d, width, height);
@@ -530,12 +485,12 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
     }
   }
 
-  // 按深度排序（最远的先绘制）
+  // Sort by depth (farthest first)
   std::sort(
       facesToDraw.begin(), facesToDraw.end(),
       [](const FaceData &a, const FaceData &b) { return a.depth > b.depth; });
 
-  // 绘制面（现在是填充的）
+  // Draw faces
   for (const auto &face : facesToDraw) {
     drawPolygon(win, face.points, face.colorPair, face.colorChar);
   }
