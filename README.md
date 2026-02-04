@@ -1,4 +1,4 @@
-# 3x3 Rubik's Cube Simulator
+# rubik
 
 一个使用 C++ 和 ncurses 库编写的 3D 魔方模拟器，可在终端中运行。
 
