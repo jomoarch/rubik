@@ -24,6 +24,8 @@
 ### Arch Linux
 ```bash
 sudo pacman -S gcc cmake ncurses
+```
+
 
 ## 构建方法
 ```bash
