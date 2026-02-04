@@ -1,3 +1,0 @@
-/home/jomoarch/rubik/build/CMakeFiles/rubik.dir
-/home/jomoarch/rubik/build/CMakeFiles/edit_cache.dir
-/home/jomoarch/rubik/build/CMakeFiles/rebuild_cache.dir
