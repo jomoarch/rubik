@@ -68,16 +68,16 @@ int main() {
       } else if (ch == 'x' || ch == 'X') {
         cube.scramble(20);
       } else if (ch == KEY_UP) {
-        cube.rotateByMouseDelta(0, 10);
-      } else if (ch == KEY_DOWN) {
         cube.rotateByMouseDelta(0, -10);
+      } else if (ch == KEY_DOWN) {
+        cube.rotateByMouseDelta(0, 10);
       } else if (ch == KEY_LEFT) {
         cube.rotateByMouseDelta(-10, 0);
       } else if (ch == KEY_RIGHT) {
         cube.rotateByMouseDelta(10, 0);
-      } else if (ch == '+') {
+      } else if (ch == '+' || ch == '=') {
         cube.zoom(1);
-      } else if (ch == '-') {
+      } else if (ch == '-' || ch == '_') {
         cube.zoom(-1);
       } else if (ch == 'f') {
         cube.rotateViewDirection("F", true);
