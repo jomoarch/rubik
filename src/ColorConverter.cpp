@@ -32,5 +32,5 @@ int RGB::to256Color() const {
   int r_idx = static_cast<int>(r_val / 255.0f * 5);
   int g_idx = static_cast<int>(g_val / 255.0f * 5);
   int b_idx = static_cast<int>(b_val / 255.0f * 5);
-  return 16 + 36 * r_idx + 6 * g_idx + b_idx;
+  return 36 * r_idx + 6 * g_idx + b_idx + 16;
 }

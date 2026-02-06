@@ -266,14 +266,16 @@ Color RubiksCube::getPieceFaceColor(
     const std::string &faceName) const {
   if (animating && std::find(animationPieces.begin(), animationPieces.end(),
                              piece) != animationPieces.end()) {
-    auto [axis, _, clockwise] = currentAnimation;
+    // 修复动画期间的颜色计算
+    auto [axis, actualFace, clockwise] = currentAnimation;
     float partialAngle =
         (clockwise ? ROTATION_ANGLE : -ROTATION_ANGLE) * animationProgress;
     Quaternion partialRotation = Quaternion::fromAxisAngle(axis, partialAngle);
 
-    // This is a simplified approach - in a real implementation,
-    // we'd need to properly handle combined rotations
-    return piece->getCurrentFaceColor(faceName);
+    // 在动画期间，使用临时旋转来计算颜色
+    Quaternion tempRotation =
+        partialRotation.multiply(piece->getLocalRotation());
+    return piece->getFaceColorWithRotation(faceName, tempRotation);
   }
 
   return piece->getCurrentFaceColor(faceName);
@@ -351,43 +353,62 @@ void RubiksCube::drawPolygon(WINDOW *win,
   int maxY, maxX;
   getmaxyx(win, maxY, maxX);
 
-  // Simple line drawing between points
-  for (size_t i = 0; i < points.size(); i++) {
-    int x1 = points[i].first;
-    int y1 = points[i].second;
-    int x2 = points[(i + 1) % points.size()].first;
-    int y2 = points[(i + 1) % points.size()].second;
+  // 简单填充算法：扫描线填充
+  if (points.size() >= 3) {
+    // 找到多边形的y范围
+    int minY = maxY, maxYVal = 0;
+    for (const auto &p : points) {
+      if (p.second < minY)
+        minY = p.second;
+      if (p.second > maxYVal)
+        maxYVal = p.second;
+    }
 
-    // Simple line drawing algorithm
-    int dx = std::abs(x2 - x1);
-    int dy = std::abs(y2 - y1);
-    int sx = (x1 < x2) ? 1 : -1;
-    int sy = (y1 < y2) ? 1 : -1;
-    int err = dx - dy;
+    // 限制在窗口范围内
+    minY = std::max(0, minY);
+    maxYVal = std::min(maxY - 1, maxYVal);
 
-    while (true) {
-      // Check bounds
-      if (y1 >= 0 && y1 < maxY && x1 >= 0 && x1 < maxX) {
-        if (colorPair > 0) {
-          wattron(win, COLOR_PAIR(colorPair));
-          mvwaddch(win, y1, x1, colorChar);
-          wattroff(win, COLOR_PAIR(colorPair));
-        } else {
-          mvwaddch(win, y1, x1, colorChar);
+    // 对每条扫描线计算交点
+    for (int y = minY; y <= maxYVal; y++) {
+      std::vector<int> intersections;
+
+      for (size_t i = 0; i < points.size(); i++) {
+        size_t j = (i + 1) % points.size();
+        int y1 = points[i].second;
+        int y2 = points[j].second;
+        int x1 = points[i].first;
+        int x2 = points[j].first;
+
+        if ((y1 <= y && y2 > y) || (y2 <= y && y1 > y)) {
+          // 计算交点
+          float t = static_cast<float>(y - y1) / (y2 - y1);
+          int intersectX = static_cast<int>(x1 + t * (x2 - x1));
+          intersections.push_back(intersectX);
         }
       }
 
-      if (x1 == x2 && y1 == y2)
-        break;
+      // 排序交点
+      std::sort(intersections.begin(), intersections.end());
 
-      int e2 = 2 * err;
-      if (e2 > -dy) {
-        err -= dy;
-        x1 += sx;
-      }
-      if (e2 < dx) {
-        err += dx;
-        y1 += sy;
+      // 填充扫描线
+      for (size_t i = 0; i < intersections.size(); i += 2) {
+        if (i + 1 >= intersections.size())
+          break;
+
+        int startX = std::max(0, intersections[i]);
+        int endX = std::min(maxX - 1, intersections[i + 1]);
+
+        for (int x = startX; x <= endX; x++) {
+          if (y >= 0 && y < maxY && x >= 0 && x < maxX) {
+            if (colorPair > 0) {
+              wattron(win, COLOR_PAIR(colorPair));
+              mvwaddch(win, y, x, colorChar);
+              wattroff(win, COLOR_PAIR(colorPair));
+            } else {
+              mvwaddch(win, y, x, colorChar);
+            }
+          }
+        }
       }
     }
   }
@@ -404,6 +425,7 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
     int colorPair;
     float depth;
     char colorChar;
+    Vector3 normal; // 添加法线用于背面剔除
   };
 
   std::vector<FaceData> facesToDraw;
@@ -414,6 +436,9 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
   for (const auto &piece : pieces) {
     for (const auto &faceName : FACE_NAMES) {
       Color colorIdx = getPieceFaceColor(piece, faceName);
+      if (colorIdx == COLOR_NONE)
+        continue;
+
       auto corners = getPieceFaceCorners(piece, faceName);
 
       if (corners.empty())
@@ -430,17 +455,19 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
       Vector3 worldCenter = rotatedCenter + position;
 
       // Calculate face normal
+      Vector3 normal(0, 0, 0);
       if (corners.size() >= 3) {
         Vector3 v1 = corners[1] - corners[0];
         Vector3 v2 = corners[2] - corners[0];
-        Vector3 normal = v1.cross(v2).normalized();
+        normal = v1.cross(v2).normalized();
         Vector3 normalRotated = rotation.rotateVector(normal);
 
         Vector3 cameraToFace = worldCenter - cameraPosition;
 
-        // Backface culling
-        if (normalRotated.dot(cameraToFace) >= 0) {
-          continue;
+        // 改进的背面剔除：确保法线指向相机
+        Vector3 viewDir = cameraPosition - worldCenter; // 相机指向面的方向
+        if (normalRotated.dot(viewDir) <= 0) {
+          continue; // 背面，跳过
         }
 
         float brightness = calculateBrightness(normalRotated);

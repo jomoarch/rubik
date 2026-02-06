@@ -4,7 +4,7 @@
 
 // Face normals (pointing outward)
 static const std::map<std::string, Vector3> FACE_NORMALS = {
-    {"F", Vector3(0, 0, -1)}, {"B", Vector3(0, 0, 1)},
+    {"F", Vector3(0, 0, 1)},  {"B", Vector3(0, 0, -1)},
     {"L", Vector3(-1, 0, 0)}, {"R", Vector3(1, 0, 0)},
     {"U", Vector3(0, 1, 0)},  {"D", Vector3(0, -1, 0)}};
 
@@ -111,6 +111,25 @@ RubiksCubePiece::getFaceCorners(const std::string &faceName) const {
 }
 
 Color RubiksCubePiece::getCurrentFaceColor(const std::string &faceName) const {
+  return getFaceColorWithRotation(faceName, localRotation);
+}
+
+void RubiksCubePiece::reset() {
+  currentPosition = initialPosition;
+  localRotation = Quaternion(1, 0, 0, 0);
+}
+
+std::string RubiksCubePiece::toString() const {
+  std::ostringstream oss;
+  oss << (pieceType == PIECE_CORNER ? "Corner"
+          : pieceType == PIECE_EDGE ? "Edge"
+                                    : "Center");
+  oss << currentPosition.toString();
+  return oss.str();
+}
+
+Color RubiksCubePiece::getFaceColorWithRotation(
+    const std::string &faceName, const Quaternion &rotation) const {
   auto it = FACE_NORMALS.find(faceName);
   if (it == FACE_NORMALS.end()) {
     return COLOR_RED; // Default
@@ -119,7 +138,7 @@ Color RubiksCubePiece::getCurrentFaceColor(const std::string &faceName) const {
   Vector3 targetNormal = it->second;
 
   // Invert the rotation to get back to initial coordinate system
-  Quaternion invRotation = localRotation.conjugate();
+  Quaternion invRotation = rotation.conjugate();
   Vector3 initialNormal = invRotation.rotateVector(targetNormal);
 
   // Find which initial face has the closest normal
@@ -143,19 +162,5 @@ Color RubiksCubePiece::getCurrentFaceColor(const std::string &faceName) const {
     return initialColors.at(bestMatch);
   }
 
-  return COLOR_RED; // Default
-}
-
-void RubiksCubePiece::reset() {
-  currentPosition = initialPosition;
-  localRotation = Quaternion(1, 0, 0, 0);
-}
-
-std::string RubiksCubePiece::toString() const {
-  std::ostringstream oss;
-  oss << (pieceType == PIECE_CORNER ? "Corner"
-          : pieceType == PIECE_EDGE ? "Edge"
-                                    : "Center");
-  oss << currentPosition.toString();
-  return oss.str();
+  return COLOR_NONE; // Default
 }
