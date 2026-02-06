@@ -131,22 +131,12 @@ private:
                    int colorPair, char colorChar);
 
   /**
-   * @brief 绘制方向标记（已弃用）
-   */
-  void drawDirectionMarker(WINDOW *win, int width, int height);
-
-  /**
    * @brief 绘制用户界面（控制说明和状态信息）
    * @param win ncurses窗口指针
    * @param width 窗口宽度
    * @param height 窗口高度
    */
   void drawUI(WINDOW *win, int width, int height);
-
-  /**
-   * @brief 获取前面顶部边块（已弃用）
-   */
-  std::shared_ptr<RubiksCubePiece> getFrontTopEdgePiece() const;
 
 public:
   /**

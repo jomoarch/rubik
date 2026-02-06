@@ -311,7 +311,7 @@ RubiksCube::getPieceFaceCorners(const std::shared_ptr<RubiksCubePiece> &piece,
 
 float RubiksCube::calculateBrightness(const Vector3 &normal) const {
   float dot = normal.dot(lightDir);
-  float ambient = 0.3f;
+  float ambient = 0.7f;
   float diffuse = std::max(0.0f, dot) * 0.7f;
   float brightness = ambient + diffuse;
 
