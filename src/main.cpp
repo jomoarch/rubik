@@ -1,8 +1,13 @@
 #include "RubiksCube.hpp"
 #include <chrono>
-#include <curses.h>
 #include <iostream>
 #include <thread>
+
+#ifdef _WIN32
+#include <pdcurses.h>
+#else
+#include <curses.h>
+#endif
 
 void printInstructions() {
   std::cout << "======================================" << std::endl;

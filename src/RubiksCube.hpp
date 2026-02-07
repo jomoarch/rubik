@@ -5,10 +5,15 @@
 #include "Enums.hpp" // 包含枚举定义
 #include "RubiksCubePiece.hpp"
 #include <chrono>
-#include <curses.h>
 #include <map>
 #include <memory>
 #include <vector>
+
+#ifdef _WIN32
+#include <pdcurses.h>
+#else
+#include <curses.h>
+#endif
 
 /**
  * @class RubiksCube
