@@ -4,8 +4,21 @@ project(rubik)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# 寻找ncurses库
-find_package(Curses REQUIRED)
+# Windows特定设置
+if(WIN32)
+    find_path(PDCURSES_INCLUDE_DIR curses.h PATH_SUFFIXES pdcurses)
+    find_library(PDCURSES_LIBRARY pdcurses)
+    
+    if(PDCURSES_INCLUDE_DIR AND PDCURSES_LIBRARY)
+        include_directories(${PDCURSES_INCLUDE_DIR})
+        set(CURSES_LIBRARIES ${PDCURSES_LIBRARY})
+    else()
+        message(FATAL_ERROR "PDCurses not found! Please install PDCurses.")
+    endif()
+else()
+    # Linux/Mac使用ncurses
+    find_package(Curses REQUIRED)
+endif()
 
 # 包含目录
 include_directories(src)
@@ -20,5 +33,5 @@ add_executable(rubik
     src/RubiksCube.cpp
 )
 
-# 链接ncurses库
+# 链接库
 target_link_libraries(rubik ${CURSES_LIBRARIES})
