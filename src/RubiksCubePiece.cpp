@@ -22,35 +22,35 @@ void RubiksCubePiece::initColors() {
   // Center pieces
   if (pieceType == PIECE_CENTER) {
     if (x == -1.0f)
-      initialColors["L"] = static_cast<Color>(COLOR_BLUE);
+      initialColors["L"] = static_cast<Color>(_COLOR_BLUE);
     else if (x == 1.0f)
-      initialColors["R"] = static_cast<Color>(COLOR_GREEN);
+      initialColors["R"] = static_cast<Color>(_COLOR_GREEN);
     else if (y == -1.0f)
-      initialColors["D"] = static_cast<Color>(COLOR_YELLOW);
+      initialColors["D"] = static_cast<Color>(_COLOR_YELLOW);
     else if (y == 1.0f)
-      initialColors["U"] = static_cast<Color>(COLOR_WHITE);
+      initialColors["U"] = static_cast<Color>(_COLOR_WHITE);
     else if (z == -1.0f)
-      initialColors["B"] = static_cast<Color>(COLOR_ORANGE);
+      initialColors["B"] = static_cast<Color>(_COLOR_ORANGE);
     else if (z == 1.0f)
-      initialColors["F"] = static_cast<Color>(COLOR_RED);
+      initialColors["F"] = static_cast<Color>(_COLOR_RED);
     return;
   }
 
   // Edge and corner pieces
   if (x == -1.0f)
-    initialColors["L"] = static_cast<Color>(COLOR_BLUE);
+    initialColors["L"] = static_cast<Color>(_COLOR_BLUE);
   else if (x == 1.0f)
-    initialColors["R"] = static_cast<Color>(COLOR_GREEN);
+    initialColors["R"] = static_cast<Color>(_COLOR_GREEN);
 
   if (y == -1.0f)
-    initialColors["D"] = static_cast<Color>(COLOR_YELLOW);
+    initialColors["D"] = static_cast<Color>(_COLOR_YELLOW);
   else if (y == 1.0f)
-    initialColors["U"] = static_cast<Color>(COLOR_WHITE);
+    initialColors["U"] = static_cast<Color>(_COLOR_WHITE);
 
   if (z == -1.0f)
-    initialColors["B"] = static_cast<Color>(COLOR_ORANGE);
+    initialColors["B"] = static_cast<Color>(_COLOR_ORANGE);
   else if (z == 1.0f)
-    initialColors["F"] = static_cast<Color>(COLOR_RED);
+    initialColors["F"] = static_cast<Color>(_COLOR_RED);
 }
 
 void RubiksCubePiece::rotate(const Vector3 &axis, float angle) {
@@ -132,7 +132,7 @@ Color RubiksCubePiece::getFaceColorWithRotation(
     const std::string &faceName, const Quaternion &rotation) const {
   auto it = FACE_NORMALS.find(faceName);
   if (it == FACE_NORMALS.end()) {
-    return COLOR_RED; // Default
+    return _COLOR_NONE; // Default
   }
 
   Vector3 targetNormal = it->second;
@@ -162,5 +162,5 @@ Color RubiksCubePiece::getFaceColorWithRotation(
     return initialColors.at(bestMatch);
   }
 
-  return COLOR_NONE; // Default
+  return _COLOR_NONE; // Default
 }

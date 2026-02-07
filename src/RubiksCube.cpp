@@ -1,4 +1,5 @@
 #include "RubiksCube.hpp"
+#include "Enums.hpp"
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -20,12 +21,12 @@ const std::vector<std::string> RubiksCube::COLOR_NAMES = {
     "Red", "Orange", "Blue", "Green", "White", "Yellow"};
 
 const std::map<std::string, Color> RubiksCube::FACE_TO_COLOR = {
-    {"F", static_cast<Color>(COLOR_ORANGE)}, // Front
-    {"B", static_cast<Color>(COLOR_RED)},    // Back
-    {"L", static_cast<Color>(COLOR_BLUE)},   // Left
-    {"R", static_cast<Color>(COLOR_GREEN)},  // Right
-    {"U", static_cast<Color>(COLOR_WHITE)},  // Up
-    {"D", static_cast<Color>(COLOR_YELLOW)}  // Down
+    {"F", static_cast<Color>(_COLOR_ORANGE)}, // Front
+    {"B", static_cast<Color>(_COLOR_RED)},    // Back
+    {"L", static_cast<Color>(_COLOR_BLUE)},   // Left
+    {"R", static_cast<Color>(_COLOR_GREEN)},  // Right
+    {"U", static_cast<Color>(_COLOR_WHITE)},  // Up
+    {"D", static_cast<Color>(_COLOR_YELLOW)}  // Down
 };
 
 const std::map<std::string, Vector3> RubiksCube::ROTATION_AXES = {
@@ -436,7 +437,7 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
   for (const auto &piece : pieces) {
     for (const auto &faceName : FACE_NAMES) {
       Color colorIdx = getPieceFaceColor(piece, faceName);
-      if (colorIdx == COLOR_NONE)
+      if (colorIdx == _COLOR_NONE)
         continue;
 
       auto corners = getPieceFaceCorners(piece, faceName);
