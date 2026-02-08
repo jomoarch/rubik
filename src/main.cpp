@@ -66,7 +66,7 @@ int main() {
     while (true) {
       int ch = getch();
 
-      if (ch == 27) { // ESC
+      if (ch == 27 || ch == 'q') { // ESC
         break;
       } else if (ch == 'c' || ch == 'C') {
         cube.reset();
