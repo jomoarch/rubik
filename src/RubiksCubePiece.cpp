@@ -111,7 +111,11 @@ RubiksCubePiece::getFaceCorners(const std::string &faceName) const {
 }
 
 Color RubiksCubePiece::getCurrentFaceColor(const std::string &faceName) const {
-  return getFaceColorWithRotation(faceName, localRotation);
+  auto it = initialColors.find(faceName);
+  if (it != initialColors.end()) {
+    return it->second;
+  }
+  return _COLOR_NONE;
 }
 
 void RubiksCubePiece::reset() {
@@ -126,41 +130,4 @@ std::string RubiksCubePiece::toString() const {
                                     : "Center");
   oss << currentPosition.toString();
   return oss.str();
-}
-
-Color RubiksCubePiece::getFaceColorWithRotation(
-    const std::string &faceName, const Quaternion &rotation) const {
-  auto it = FACE_NORMALS.find(faceName);
-  if (it == FACE_NORMALS.end()) {
-    return _COLOR_NONE; // Default
-  }
-
-  Vector3 targetNormal = it->second;
-
-  // Invert the rotation to get back to initial coordinate system
-  Quaternion invRotation = rotation.conjugate();
-  Vector3 initialNormal = invRotation.rotateVector(targetNormal);
-
-  // Find which initial face has the closest normal
-  std::string bestMatch;
-  float bestDot = -1.0f;
-
-  for (const auto &[initFace, initColor] : initialColors) {
-    auto normalIt = FACE_NORMALS.find(initFace);
-    if (normalIt != FACE_NORMALS.end()) {
-      Vector3 initNormal = normalIt->second;
-      float dot = initialNormal.dot(initNormal);
-      if (dot > bestDot) {
-        bestDot = dot;
-        bestMatch = initFace;
-      }
-    }
-  }
-
-  // Return the matched face color
-  if (!bestMatch.empty() && bestDot > 0.9f) {
-    return initialColors.at(bestMatch);
-  }
-
-  return _COLOR_NONE; // Default
 }

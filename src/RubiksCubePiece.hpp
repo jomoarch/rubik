@@ -66,7 +66,7 @@ public:
   } ///< 获取当前位置
   Vector3 getInitialPosition() const {
     return initialPosition;
-  }                                                    ///< 获取初始位置
+  } ///< 获取初始位置
   PieceType getPieceType() const { return pieceType; } ///< 获取块类型
   Quaternion getLocalRotation() const {
     return localRotation;
@@ -77,16 +77,6 @@ public:
    * @return 包含块类型和位置的字符串
    */
   std::string toString() const;
-
-  /**
-   * @brief 获取指定旋转状态下指定面的颜色
-   * @param faceName 面名称
-   * @param rotation 旋转四元数
-   * @return 面的颜色
-   * @note 用于动画期间的颜色计算
-   */
-  Color getFaceColorWithRotation(const std::string &faceName,
-                                 const Quaternion &rotation) const;
 };
 
 #endif

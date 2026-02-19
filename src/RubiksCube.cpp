@@ -265,20 +265,7 @@ Vector3 RubiksCube::getPiecePosition(
 Color RubiksCube::getPieceFaceColor(
     const std::shared_ptr<RubiksCubePiece> &piece,
     const std::string &faceName) const {
-  if (animating && std::find(animationPieces.begin(), animationPieces.end(),
-                             piece) != animationPieces.end()) {
-    // 修复动画期间的颜色计算
-    auto [axis, actualFace, clockwise] = currentAnimation;
-    float partialAngle =
-        (clockwise ? ROTATION_ANGLE : -ROTATION_ANGLE) * animationProgress;
-    Quaternion partialRotation = Quaternion::fromAxisAngle(axis, partialAngle);
-
-    // 在动画期间，使用临时旋转来计算颜色
-    Quaternion tempRotation =
-        partialRotation.multiply(piece->getLocalRotation());
-    return piece->getFaceColorWithRotation(faceName, tempRotation);
-  }
-
+  // 无论是否动画，颜色由块自身决定，不随旋转改变
   return piece->getCurrentFaceColor(faceName);
 }
 
@@ -420,13 +407,12 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
   werase(win);
   updateAnimation();
 
-  // Define face drawing order based on depth (painter's algorithm)
+  // 定义要绘制的面片数据结构
   struct FaceData {
-    std::vector<std::pair<int, int>> points;
-    int colorPair;
-    float depth;
-    char colorChar;
-    Vector3 normal; // 添加法线用于背面剔除
+    std::vector<std::pair<int, int>> points; // 屏幕上的多边形顶点
+    int colorPair;                           // ncurses 颜色对编号
+    float depth;                             // 深度（用于排序）
+    char colorChar;                          // 填充字符
   };
 
   std::vector<FaceData> facesToDraw;
@@ -435,94 +421,95 @@ void RubiksCube::draw(WINDOW *win, int width, int height,
                                                       "R", "U", "D"};
 
   for (const auto &piece : pieces) {
+    // 获取块的当前位置（考虑动画）
+    Vector3 piecePos = getPiecePosition(piece);
+
     for (const auto &faceName : FACE_NAMES) {
-      Color colorIdx = getPieceFaceColor(piece, faceName);
+      // 获取该面在块上的颜色（直接查表，不依赖旋转）
+      Color colorIdx = piece->getCurrentFaceColor(faceName);
       if (colorIdx == _COLOR_NONE)
         continue;
 
+      // 获取该面在世界坐标系中的角点
       auto corners = getPieceFaceCorners(piece, faceName);
-
-      if (corners.empty())
+      if (corners.size() < 3)
         continue;
 
-      // Calculate face center
+      // 计算面中心（用于深度排序）
       Vector3 center(0, 0, 0);
       for (const auto &corner : corners) {
         center = center + corner;
       }
       center = center * (1.0f / corners.size());
 
+      // 将中心旋转到世界坐标系（考虑魔方整体旋转）
       Vector3 rotatedCenter = rotation.rotateVector(center);
       Vector3 worldCenter = rotatedCenter + position;
 
-      // Calculate face normal
-      Vector3 normal(0, 0, 0);
-      if (corners.size() >= 3) {
-        Vector3 v1 = corners[1] - corners[0];
-        Vector3 v2 = corners[2] - corners[0];
-        normal = v1.cross(v2).normalized();
-        Vector3 normalRotated = rotation.rotateVector(normal);
+      // 计算面法线（原始法线，需旋转到世界坐标系）
+      Vector3 v1 = corners[1] - corners[0];
+      Vector3 v2 = corners[2] - corners[0];
+      Vector3 normal = v1.cross(v2).normalized();
+      Vector3 normalWorld = rotation.rotateVector(normal);
 
-        Vector3 cameraToFace = worldCenter - cameraPosition;
+      // 背面剔除：检查法线是否朝向相机
+      Vector3 viewDir = cameraPosition - worldCenter; // 从面指向相机
+      if (normalWorld.dot(viewDir) <= 0) {
+        continue; // 背面，跳过
+      }
 
-        // 改进的背面剔除：确保法线指向相机
-        Vector3 viewDir = cameraPosition - worldCenter; // 相机指向面的方向
-        if (normalRotated.dot(viewDir) <= 0) {
-          continue; // 背面，跳过
-        }
+      // 计算亮度
+      float brightness = calculateBrightness(normalWorld);
 
-        float brightness = calculateBrightness(normalRotated);
+      // 获取基础颜色并应用亮度
+      int colorIndexInt = static_cast<int>(colorIdx);
+      if (colorIndexInt < 0 ||
+          colorIndexInt >= static_cast<int>(COLOR_RGB.size())) {
+        continue; // 防御性检查
+      }
+      RGB baseColor = COLOR_RGB[colorIndexInt];
+      RGB shadedColor = baseColor.applyBrightness(brightness);
 
-        // 安全检查颜色索引
-        int colorIndexInt = static_cast<int>(colorIdx);
-        if (colorIndexInt < 0 ||
-            colorIndexInt >= static_cast<int>(COLOR_RGB.size())) {
-          continue; // 跳过无效的颜色索引
-        }
+      // 转换为终端256色索引并初始化颜色对
+      int terminalColorIndex = shadedColor.to256Color();
+      int colorPair;
+      auto it = colorCache.find(terminalColorIndex);
+      if (it != colorCache.end()) {
+        colorPair = it->second;
+      } else {
+        colorPair = static_cast<int>(colorCache.size()) + 1;
+        init_pair(colorPair, terminalColorIndex, COLOR_BLACK);
+        colorCache[terminalColorIndex] = colorPair;
+      }
 
-        RGB baseColor = COLOR_RGB[colorIndexInt];
-        RGB shadedColor = baseColor.applyBrightness(brightness);
+      // 将3D角点投影到2D屏幕
+      std::vector<std::pair<int, int>> screenPoints;
+      for (const auto &corner3d : corners) {
+        auto [x, y, _] = projectPoint(corner3d, width, height);
+        screenPoints.emplace_back(x, y);
+      }
 
-        int terminalColorIndex = shadedColor.to256Color();
-        int colorPair;
-
-        if (colorCache.find(terminalColorIndex) != colorCache.end()) {
-          colorPair = colorCache[terminalColorIndex];
-        } else {
-          colorPair = static_cast<int>(colorCache.size()) + 1;
-          init_pair(colorPair, terminalColorIndex, COLOR_BLACK);
-          colorCache[terminalColorIndex] = colorPair;
-        }
-
-        // Project corners to screen
-        std::vector<std::pair<int, int>> screenPoints;
-        for (const auto &corner3d : corners) {
-          auto [x, y, _] = projectPoint(corner3d, width, height);
-          screenPoints.emplace_back(x, y);
-        }
-
-        float depth = cameraToFace.length();
-
-        // 安全检查字符索引
-        if (colorIndexInt >= 0 &&
-            colorIndexInt < static_cast<int>(COLOR_CHARS.size())) {
-          char colorChar = COLOR_CHARS[colorIndexInt];
-          facesToDraw.push_back({screenPoints, colorPair, depth, colorChar});
-        }
+      // 获取显示字符
+      if (colorIndexInt >= 0 &&
+          colorIndexInt < static_cast<int>(COLOR_CHARS.size())) {
+        char colorChar = COLOR_CHARS[colorIndexInt];
+        float depth = (worldCenter - cameraPosition).length();
+        facesToDraw.push_back({screenPoints, colorPair, depth, colorChar});
       }
     }
   }
 
-  // Sort by depth (farthest first)
+  // 按深度从远到近排序（画家算法）
   std::sort(
       facesToDraw.begin(), facesToDraw.end(),
       [](const FaceData &a, const FaceData &b) { return a.depth > b.depth; });
 
-  // Draw faces
+  // 绘制所有面
   for (const auto &face : facesToDraw) {
     drawPolygon(win, face.points, face.colorPair, face.colorChar);
   }
 
+  // 绘制UI
   drawUI(win, width, height);
 }
 
