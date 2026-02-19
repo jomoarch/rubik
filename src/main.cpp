@@ -55,6 +55,11 @@ int main() {
     return 1;
   }
 
+  // 启用鼠标事件
+  mousemask(ALL_MOUSE_EVENTS | REPORT_MOUSE_POSITION, NULL);
+  mouseinterval(0);
+  printf("\033[?1003h\n"); // 启用鼠标移动跟踪
+
   start_color();
   use_default_colors();
 
@@ -65,6 +70,32 @@ int main() {
   try {
     while (true) {
       int ch = getch();
+
+      if (ch == KEY_MOUSE) {
+        MEVENT event;
+        if (getmouse(&event) == OK) {
+          static int prev_x = -1, prev_y = -1;
+          static bool dragging = false;
+
+          if (event.bstate & BUTTON1_PRESSED) {
+            dragging = true;
+            prev_x = event.x;
+            prev_y = event.y;
+          } else if (event.bstate & BUTTON1_RELEASED) {
+            dragging = false;
+          } else if (dragging && (event.bstate & REPORT_MOUSE_POSITION)) {
+            int dx = event.x - prev_x;
+            int dy = event.y - prev_y;
+            if (dx != 0 || dy != 0) {
+              cube.rotateByMouseDelta(static_cast<float>(4 * dx),
+                                      static_cast<float>(8 * dy));
+              prev_x = event.x;
+              prev_y = event.y;
+            }
+          }
+        }
+        continue; // 跳过后续键盘处理
+      }
 
       if (ch == 27 || ch == 'q') { // ESC
         break;
@@ -134,6 +165,8 @@ int main() {
     std::cerr << "Error: " << e.what() << std::endl;
     return 1;
   }
+  // 恢复终端鼠标设置
+  printf("\033[?1003l\n");
 
   endwin();
   std::cout << "Game ended." << std::endl << "Goodbye!" << std::endl;
