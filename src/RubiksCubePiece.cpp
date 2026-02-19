@@ -4,7 +4,7 @@
 
 // Face normals (pointing outward)
 static const std::map<std::string, Vector3> FACE_NORMALS = {
-    {"F", Vector3(0, 0, -1)}, {"B", Vector3(0, 0, 1)},
+    {"F", Vector3(0, 0, 1)},  {"B", Vector3(0, 0, -1)},
     {"L", Vector3(-1, 0, 0)}, {"R", Vector3(1, 0, 0)},
     {"U", Vector3(0, 1, 0)},  {"D", Vector3(0, -1, 0)}};
 

@@ -136,6 +136,6 @@ int main() {
   }
 
   endwin();
-  std::cout << "Game ended. Goodbye!" << std::endl;
+  std::cout << "Game ended." << std::endl << "Goodbye!" << std::endl;
   return 0;
 }
