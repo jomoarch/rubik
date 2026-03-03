@@ -5,7 +5,6 @@
 ## 构建方法
 ```bash
 cd rubik
-chmod +x build.sh
 ./build.sh
 ./build/rubik
 ```
