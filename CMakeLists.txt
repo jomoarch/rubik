@@ -4,6 +4,8 @@ project(rubik)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+find_package(PkgConfig REQUIRED)
+
 # Windows特定设置
 if(WIN32)
     find_path(PDCURSES_INCLUDE_DIR curses.h PATH_SUFFIXES pdcurses)
@@ -20,10 +22,6 @@ else()
     find_package(Curses REQUIRED)
 endif()
 
-# 包含目录
-include_directories(src)
-
-# 添加可执行文件
 add_executable(rubik
     src/main.cpp
     src/Vector3.cpp
@@ -33,5 +31,7 @@ add_executable(rubik
     src/RubiksCube.cpp
 )
 
-# 链接库
+target_include_directories(rubik PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(rubik PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 target_link_libraries(rubik ${CURSES_LIBRARIES})
