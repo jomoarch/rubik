@@ -55,9 +55,9 @@ private:
   Quaternion animationRotation; ///< 动画旋转四元数
 
   // View mapping
-  std::map<std::string, std::string>
-      viewMapping;                               ///< 视图方向到实际魔方面的映射
-  std::map<std::string, Vector3> viewDirections; ///< 视图方向向量
+  std::unordered_map<std::string, std::string>
+      viewMapping; ///< 视图方向到实际魔方面的映射
+  std::unordered_map<std::string, Vector3> viewDirections; ///< 视图方向向量
 
   // Constants
   static constexpr float ANIMATION_DURATION = 0.3f; ///< 动画持续时间（秒）
@@ -66,11 +66,13 @@ private:
   static constexpr float LIGHT_HEIGHT = 7.0f; ///< 光源在摄像头上方的高度
 
   // Color definitions
-  static const std::vector<RGB> COLOR_RGB;                   ///< RGB颜色定义
-  static const std::vector<char> COLOR_CHARS;                ///< 颜色字符表示
-  static const std::vector<std::string> COLOR_NAMES;         ///< 颜色名称
-  static const std::map<std::string, Color> FACE_TO_COLOR;   ///< 面到颜色的映射
-  static const std::map<std::string, Vector3> ROTATION_AXES; ///< 面旋转轴定义
+  static const std::vector<RGB> COLOR_RGB;           ///< RGB颜色定义
+  static const std::vector<char> COLOR_CHARS;        ///< 颜色字符表示
+  static const std::vector<std::string> COLOR_NAMES; ///< 颜色名称
+  static const std::unordered_map<std::string, Color>
+      FACE_TO_COLOR; ///< 面到颜色的映射
+  static const std::unordered_map<std::string, Vector3>
+      ROTATION_AXES; ///< 面旋转轴定义
 
   std::vector<std::pair<Vector3, bool>> history; // 存储历史旋转
 
@@ -276,7 +278,7 @@ public:
   /**
    * @brief 获取视图方向到实际魔方面的映射（只读）
    */
-  const std::map<std::string, std::string> &getViewMapping() const {
+  const std::unordered_map<std::string, std::string> &getViewMapping() const {
     return viewMapping;
   }
 

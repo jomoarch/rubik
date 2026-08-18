@@ -1,8 +1,8 @@
 #include "RubiksCubePiece.hpp"
-#include <map>
+#include <unordered_map>
 #include <sstream>
 
-static const std::map<std::string, Vector3> FACE_NORMALS = {
+static const std::unordered_map<std::string, Vector3> FACE_NORMALS = {
     {"F", Vector3(0, 0, 1)},  {"B", Vector3(0, 0, -1)},
     {"L", Vector3(-1, 0, 0)}, {"R", Vector3(1, 0, 0)},
     {"U", Vector3(0, 1, 0)},  {"D", Vector3(0, -1, 0)}};
@@ -58,8 +58,8 @@ void RubiksCubePiece::rotate(const Vector3 &axis, float angle) {
 
 std::vector<Vector3>
 RubiksCubePiece::getFaceCorners(const std::string &faceName) const {
-  static const std::map<std::string,
-                        std::vector<std::tuple<float, float, float>>>
+  static const std::unordered_map<std::string,
+                                  std::vector<std::tuple<float, float, float>>>
       FACE_CORNERS = {{"F",
                        {{-0.5f, -0.5f, 0.5f},
                         {0.5f, -0.5f, 0.5f},

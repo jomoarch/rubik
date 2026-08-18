@@ -4,7 +4,7 @@
 #include "Enums.hpp" // 包含枚举定义
 #include "Quaternion.hpp"
 #include "Vector3.hpp"
-#include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -19,7 +19,8 @@ private:
   Vector3 currentPosition;  ///< 块的当前位置（考虑旋转后）
   PieceType pieceType;      ///< 块类型（角块、边块、中心块）
   Quaternion localRotation; ///< 块的局部旋转四元数
-  std::map<std::string, Color> initialColors; ///< 初始颜色映射（面名->颜色）
+  std::unordered_map<std::string, Color>
+      initialColors; ///< 初始颜色映射（面名->颜色）
 
   /**
    * @brief 根据块类型和位置初始化颜色

@@ -31,7 +31,7 @@ const std::vector<char> RubiksCube::COLOR_CHARS = {'R', 'O', 'B',
 const std::vector<std::string> RubiksCube::COLOR_NAMES = {
     "Red", "Orange", "Blue", "Green", "White", "Yellow"};
 
-const std::map<std::string, Color> RubiksCube::FACE_TO_COLOR = {
+const std::unordered_map<std::string, Color> RubiksCube::FACE_TO_COLOR = {
     {"F", static_cast<Color>(_COLOR_ORANGE)}, // Front
     {"B", static_cast<Color>(_COLOR_RED)},    // Back
     {"L", static_cast<Color>(_COLOR_BLUE)},   // Left
@@ -40,7 +40,7 @@ const std::map<std::string, Color> RubiksCube::FACE_TO_COLOR = {
     {"D", static_cast<Color>(_COLOR_YELLOW)}  // Down
 };
 
-const std::map<std::string, Vector3> RubiksCube::ROTATION_AXES = {
+const std::unordered_map<std::string, Vector3> RubiksCube::ROTATION_AXES = {
     {"F", Vector3(0, 0, -1)}, {"B", Vector3(0, 0, 1)},
     {"L", Vector3(-1, 0, 0)}, {"R", Vector3(1, 0, 0)},
     {"U", Vector3(0, 1, 0)},  {"D", Vector3(0, -1, 0)}};
@@ -110,7 +110,7 @@ void RubiksCube::createPieces() {
 void RubiksCube::updateViewMapping() {
   Quaternion invRotation = rotation.conjugate();
 
-  static const std::map<std::string, Vector3> FACE_NORMALS = {
+  static const std::unordered_map<std::string, Vector3> FACE_NORMALS = {
       {"F", Vector3(0, 0, -1)}, {"B", Vector3(0, 0, 1)},
       {"L", Vector3(-1, 0, 0)}, {"R", Vector3(1, 0, 0)},
       {"U", Vector3(0, 1, 0)},  {"D", Vector3(0, -1, 0)}};
@@ -299,7 +299,7 @@ std::string RubiksCube::getFaceletString() {
     Vector3 colAxis;
     int colSign;
   };
-  static const std::map<std::string, FaceTable> FACE_TABLES = {
+  static const std::unordered_map<std::string, FaceTable> FACE_TABLES = {
       {"U", {Vector3(0, 1, 0), Vector3(0, 0, 1), 1, Vector3(1, 0, 0), -1}},
       {"R", {Vector3(1, 0, 0), Vector3(0, 1, 0), 1, Vector3(0, 0, 1), -1}},
       {"F", {Vector3(0, 0, -1), Vector3(0, 1, 0), 1, Vector3(1, 0, 0), -1}},
